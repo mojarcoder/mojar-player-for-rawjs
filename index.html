@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mojar Player</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Critical CSS to ensure player visibility */
+        .splash-screen.force-hide {
+            display: none !important;
+            z-index: -999 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+    </style>
+</head>
+<body onclick="document.getElementById('splashScreen').classList.add('force-hide');">
+    <div class="player-container">
+        <div class="file-controls">
+            <input type="file" id="mediaFileInput" accept="video/*,audio/*" style="display:none">
+            <button id="openFileBtn" class="control-button"><i class="fas fa-folder-open"></i> Open Media</button>
+            <button id="openUrlBtn" class="control-button"><i class="fas fa-link"></i> Open URL</button>
+            <button id="aboutBtn" class="control-button"><i class="fas fa-info-circle"></i> About</button>
+            <div class="theme-toggle-container">
+                <button id="themeToggleBtn" class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="video-container" id="mediaContainer">
+            <video id="myVideo">
+                <source src="your_video.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <!-- Overlay Controls -->
+            <div class="overlay-controls">
+                <div class="top-bar">
+                    <div class="title-bar" id="mediaTitle">No Media Loaded</div>
+                    <div class="window-controls">
+                        <button id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
+                        <button id="minimizeBtn" title="Minimize"><i class="fas fa-window-minimize"></i></button>
+                        <button id="maximizeBtn" title="Maximize"><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+                
+                <div class="center-controls">
+                    <button id="previousBtn" title="Previous"><i class="fas fa-step-backward"></i></button>
+                    <button id="rewindBtn" title="Rewind 10s"><i class="fas fa-backward"></i></button>
+                    <button id="videoPlayPause" class="play-button" title="Play/Pause"><i class="fas fa-play"></i></button>
+                    <button id="forwardBtn" title="Forward 10s"><i class="fas fa-forward"></i></button>
+                    <button id="nextBtn" title="Next"><i class="fas fa-step-forward"></i></button>
+                </div>
+                
+                <div class="bottom-controls">
+                    <div class="progress-container">
+                        <div class="seek-bar-container">
+                            <input type="range" id="videoSeek" value="0" class="seek-bar" title="Seek">
+                            <div class="seek-preview" id="seekPreview"></div>
+                        </div>
+                        <div class="time-display">
+                            <span id="videoCurrentTime">0:00</span> / <span id="videoDuration">0:00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-bar">
+                        <button id="videoStop" title="Stop"><i class="fas fa-stop"></i></button>
+                        <button id="videoMute" title="Mute"><i class="fas fa-volume-up"></i></button>
+                        <div class="volume-container">
+                            <input type="range" id="videoVolume" min="0" max="1" step="0.05" value="1" class="volume-bar" title="Volume">
+                        </div>
+                        <select id="videoSpeed" class="speed-select" title="Playback Speed">
+                            <option value="0.25">0.25x</option>
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                        </select>
+                        <button id="captionBtn" title="Captions"><i class="fas fa-closed-captioning"></i></button>
+                        <button id="snapBtn" title="Take Snapshot"><i class="fas fa-camera"></i></button>
+                        <button id="videoFullscreen" title="Fullscreen"><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playlist Section -->
+        <div class="playlist-container">
+            <div class="playlist-header">
+                <div class="playlist-header-left">
+                    <h3><i class="fas fa-list-ul"></i> Playlist</h3>
+                    <span class="playlist-count" id="playlistCount">0 items</span>
+                </div>
+                <div class="playlist-header-right">
+                    <button id="shuffleBtn" title="Shuffle"><i class="fas fa-random"></i></button>
+                    <button id="loopBtn" title="Loop"><i class="fas fa-redo"></i></button>
+                    <button id="clearPlaylistBtn" title="Clear Playlist"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <ul id="playlist" class="playlist">
+                <!-- Playlist items will be added here dynamically -->
+                <li class="playlist-item empty-playlist">No media added to playlist</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-group">
+            <div class="context-menu-item" id="contextPlayPause">
+                <i class="fas fa-play"></i> Play
+            </div>
+            <div class="context-menu-item" id="contextStop">
+                <i class="fas fa-stop"></i> Stop
+            </div>
+        </div>
+        <div class="context-menu-group">
+            <div class="context-menu-item" id="contextMute">
+                <i class="fas fa-volume-up"></i> Mute
+            </div>
+            <div class="context-menu-item submenu-trigger">
+                <i class="fas fa-tachometer-alt"></i> Playback Speed
+                <i class="fas fa-caret-right submenu-icon"></i>
+                <div class="submenu speed-submenu">
+                    <div class="context-menu-item" data-speed="0.5">0.5x</div>
+                    <div class="context-menu-item" data-speed="1.0">1.0x</div>
+                    <div class="context-menu-item" data-speed="1.5">1.5x</div>
+                    <div class="context-menu-item" data-speed="2.0">2.0x</div>
+                </div>
+            </div>
+        </div>
+        <div class="context-menu-group">
+            <div class="context-menu-item" id="contextFullscreen">
+                <i class="fas fa-expand"></i> Fullscreen
+            </div>
+            <div class="context-menu-item" id="contextSnapshot">
+                <i class="fas fa-camera"></i> Take Snapshot
+            </div>
+            <div class="context-menu-item" id="contextCopyTime">
+                <i class="fas fa-clock"></i> Copy Current Time
+            </div>
+        </div>
+        <div class="context-menu-group">
+            <div class="context-menu-item" id="contextLoop">
+                <i class="fas fa-redo"></i> Loop
+            </div>
+            <div class="context-menu-item" id="contextProperties">
+                <i class="fas fa-info-circle"></i> Media Properties
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties Dialog -->
+    <div id="propertiesDialog" class="dialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>Media Properties</h3>
+                <button id="closePropertiesDialog"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="dialog-body">
+                <div class="properties-container" id="mediaProperties">
+                    <!-- Properties will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- URL Input Dialog -->
+    <div class="url-dialog" id="urlDialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>Open URL</h3>
+                <button id="closeUrlDialog"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="dialog-body">
+                <input type="text" id="urlInput" placeholder="Enter media URL (http://, https://, etc.)">
+                <button id="loadUrlBtn">Load</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Info -->
+    <div class="keyboard-shortcuts-info">
+        <h3>Keyboard Shortcuts</h3>
+        <table>
+            <tr><td>Space</td><td>Play/Pause</td></tr>
+            <tr><td>F</td><td>Fullscreen</td></tr>
+            <tr><td>M</td><td>Mute/Unmute</td></tr>
+            <tr><td>←</td><td>Rewind 10s</td></tr>
+            <tr><td>→</td><td>Forward 10s</td></tr>
+            <tr><td>↑</td><td>Volume Up</td></tr>
+            <tr><td>↓</td><td>Volume Down</td></tr>
+            <tr><td>N</td><td>Next Track</td></tr>
+            <tr><td>P</td><td>Previous Track</td></tr>
+            <tr><td>S</td><td>Stop</td></tr>
+            <tr><td>T</td><td>Toggle Theme</td></tr>
+        </table>
+    </div>
+
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <div class="profile-photo">
+                <img src="ashik.jpg" alt="Profile Photo" id="profilePhoto">
+            </div>
+            <h1 class="player-name">Mojar Player</h1>
+            <div class="social-links">
+                <a href="https://facebook.com/mojarcoder" target="_blank" class="social-link">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                <a href="https://youtube.com/@mojarcoder" target="_blank" class="social-link">
+                    <i class="fab fa-youtube"></i>
+                </a>
+                <a href="https://github.com/mojarcoder" target="_blank" class="social-link">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Screen -->
+    <div id="aboutScreen" class="dialog about-screen">
+        <div class="dialog-content about-content">
+            <div class="dialog-header">
+                <h3>About Mojar Player</h3>
+                <button id="closeAboutDialog"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="dialog-body about-body">
+                <div class="about-profile">
+                    <img src="ashik.jpg" alt="Profile Photo" class="about-photo">
+                    <h2>Mojar Player</h2>
+                    <p>A modern web-based media player with advanced features.</p>
+                </div>
+                <div class="about-social">
+                    <h3>Connect With Me</h3>
+                    <div class="social-links about-social-links">
+                        <a href="https://facebook.com/mojarcoder" target="_blank" class="social-link">
+                            <i class="fab fa-facebook"></i>
+                            <span>facebook.com/mojarcoder</span>
+                        </a>
+                        <a href="https://youtube.com/@mojarcoder" target="_blank" class="social-link">
+                            <i class="fab fa-youtube"></i>
+                            <span>youtube.com/@mojarcoder</span>
+                        </a>
+                        <a href="https://github.com/mojarcoder" target="_blank" class="social-link">
+                            <i class="fab fa-github"></i>
+                            <span>github.com/mojarcoder</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
